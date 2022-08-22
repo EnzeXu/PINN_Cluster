@@ -504,7 +504,7 @@ class GroundTruthSIRAges:
             line_style_list=line_style_list,
             fig_title="Ground Truth: SIR - Ages",
             fig_size=(8, 6),
-            show_flag=True,
+            show_flag=False,
             save_flag=False,
             save_path=None
         )
@@ -713,7 +713,7 @@ def test_sir_ages(model, args, config, now_string, show_flag=True, gt=None):
             line_style_list=line_style_list,
             fig_title="Predict: SIR - Ages",
             fig_size=(24, 18),
-            show_flag=True,
+            show_flag=False,
             save_flag=True,
             save_path=figure_save_path
         )
@@ -727,7 +727,7 @@ def test_sir_ages(model, args, config, now_string, show_flag=True, gt=None):
             line_style_list=["dotted"] + line_style_list,
             fig_title="Predict: SIR - Ages",
             fig_size=(24, 18),
-            show_flag=True,
+            show_flag=False,
             save_flag=True,
             save_path=figure_save_path
         )
@@ -754,7 +754,7 @@ def draw_loss(loss_list):
         fig_x_label="epoch",
         fig_y_label="loss",
         fig_size=(8, 6),
-        show_flag=True,
+        show_flag=False,
         save_flag=False,
         save_path=None
     )
