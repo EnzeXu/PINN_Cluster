@@ -16,9 +16,8 @@ from scipy import stats
 from tqdm import tqdm
 from collections import OrderedDict
 from torch.backends import cudnn
-from mpl_toolkits.mplot3d import Axes3D
 from scipy.integrate import odeint
-from torch.utils.tensorboard import SummaryWriter
+
 
 from utils import *
 
@@ -865,13 +864,13 @@ def run_sir_ages_continue(args=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epoch", type=int, default=100000, help="epoch")
+    parser.add_argument("--epoch", type=int, default=100, help="epoch")
     parser.add_argument("--log_path", type=str, default="logs/1.txt", help="log path")
-    parser.add_argument("--mode", type=int, default="origin", help="continue or origin")
-    parser.add_argument("--epoch_step", type=int, default=1000, help="epoch_step")
-    parser.add_argument('--lr', type=float, default=0.01, help='learning rate, default=0.001')
+    parser.add_argument("--mode", type=str, default="origin", help="continue or origin")
+    parser.add_argument("--epoch_step", type=int, default=10, help="epoch_step")
+    parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.001')
     parser.add_argument("--main_path", default=".", help="main_path")
-    parser.add_argument("--save_step", type=int, default=10000, help="save_step")
+    parser.add_argument("--save_step", type=int, default=100, help="save_step")
     opt = parser.parse_args()
 
     myprint("log_path: {}".format(opt.log_path), opt.log_path)
