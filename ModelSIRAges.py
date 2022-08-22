@@ -487,7 +487,7 @@ class GroundTruthSIRAges:
         dydt = np.asarray(ds + di + dr)
         return dydt
 
-    def print(self):
+    def print_truth(self):
         y_lists = [self.data[:, i] for i in range(3 * self.n)]
         x_list = self.t
         color_list = ["red"] * self.n + ["blue"] * self.n + ["green"] * self.n
