@@ -126,7 +126,7 @@ class ConfigBYCC:
         self.N = int(self.T / self.T_unit)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.seed = 0
+        # self.seed = 0
 
         self.ub = self.T
         self.lb = 0.0
@@ -162,7 +162,8 @@ class SimpleNetworkBYCC(nn.Module):
         self.config = config
         self.args = args
         myprint("self.truth_length: {} of {} all ".format(self.config.truth_length, self.config.N), self.args.log_path)
-        self.setup_seed(self.config.seed)
+        self.setup_seed(args.seed)
+        myprint("seed = {}".format(args.seed), self.args.log_path)
         self.device = self.config.device
         self.x, self.y0, self.t0 = None, None, None
         self.accurate_x = None
@@ -910,6 +911,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.001')
     parser.add_argument("--main_path", default=".", help="main_path")
     parser.add_argument("--save_step", type=int, default=100, help="save_step")
+    parser.add_argument("--seed", type=int, default=100, help="seed")
     opt = parser.parse_args()
 
     myprint("log_path: {}".format(opt.log_path), opt.log_path)
