@@ -765,7 +765,9 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
 
     # y_pr = np.concatenate((Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14),axis = 1)
 
-    figure_save_path = f"{args.main_path}/figure/{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}_timestamp={int(time.time())}.png"
+    figure_save_path_folder = f"{args.main_path}/figure/{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}_timestamp={int(time.time())}/"
+    if not os.path.exists(figure_save_path_folder):
+        os.makedirs(figure_save_path_folder)
     labels = ["Cln", "ClbSt", "MBF", "Nrm1t", "ClbMt", "Polo", "Sic1t", "SBF", "Cdh1", "Cdc14"]
     color_list = ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "indigo", "brown"]
     color_list.extend(['black'] * 10)
@@ -777,6 +779,18 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
     ylist = np.array([Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14]).reshape(10, -1)
     y_true_list = model.gt_data.cpu().detach().numpy().transpose()
 
+    m = MultiSubplotDraw(row=2, col=5, fig_size=(40, 12), tight_layout_flag=True, show_flag=False, save_flag=True,
+                         save_path="{}/{}".format(figure_save_path_folder, f"{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}_timestamp={int(time.time())}.png"), save_dpi=400)
+    for name, item, item_target, color in zip(labels, ylist, y_true_list, color_list[:10]):
+        m.add_subplot(
+            y_lists=[item.cpu().detach().numpy().flatten(), item_target.cpu().detach().numpy().flatten()],
+            x_list=model.accurate_x,
+            color_list=[color, "black"],
+            legend_list=["y_pred", "y_truth"],
+            line_style_list=["solid", "dashed"],
+            fig_title=name,
+        )
+    m.draw()
 
     for i in range(len(labels)):
         co = ['black', color_list[i]]
@@ -793,7 +807,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
             fig_size=(8, 6),
             show_flag=False,
             save_flag=True,
-            save_path=figure_save_path
+            save_path="{}/{}.png".format(figure_save_path_folder, labels[i])
         )
 
 #
