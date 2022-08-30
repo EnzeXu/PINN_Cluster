@@ -28,6 +28,7 @@ def build_slurm(args):
         id_range = range(start_index, last_index + 1)
     else:
         id_range = [int(args.id)]
+    files_string = "{}/{}_{}.slurm".format(args.slurm_path, args.name, args.id)
     for one_id in id_range:
         with open("{}/{}_{}.slurm".format(args.slurm_path, args.name, one_id), "w") as f:
             f.write(draft.format(
@@ -42,6 +43,7 @@ def build_slurm(args):
                 args.main_path,
                 one_id
             ))
+    print("build slurm file(s) \"{}\" successfully!".format(files_string))
 
 
 if __name__ == "__main__":
