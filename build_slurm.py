@@ -1,8 +1,7 @@
 import argparse
 
 
-draft = """
-#!/bin/bash -l
+draft = """#!/bin/bash -l
 
 #SBATCH --job-name="{0}_{9}"
 #SBATCH --partition=gpu
