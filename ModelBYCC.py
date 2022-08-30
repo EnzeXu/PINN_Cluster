@@ -765,7 +765,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
 
     # y_pr = np.concatenate((Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14),axis = 1)
 
-    figure_save_path = f"{args.main_path}/figure/{model.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_{int(time.time())}.png"
+    figure_save_path = f"{args.main_path}/figure/{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}_timestamp={int(time.time())}.png"
     labels = ["Cln", "ClbSt", "MBF", "Nrm1t", "ClbMt", "Polo", "Sic1t", "SBF", "Cdh1", "Cdc14"]
     color_list = ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "indigo", "brown"]
     color_list.extend(['black'] * 10)
