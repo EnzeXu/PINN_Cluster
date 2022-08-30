@@ -120,7 +120,7 @@ class GroundTruthBYCC:
 class ConfigBYCC:
     def __init__(self):
         self.model_name = "ModelBYCC_Cluster"
-        self.T = 100.0
+        self.T = 100.0 / 20.0
         self.T_all = self.T
         self.T_unit = 0.1
         self.N = int(self.T / self.T_unit)
