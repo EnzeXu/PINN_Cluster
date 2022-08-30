@@ -783,7 +783,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
                          save_path="{}/{}".format(figure_save_path_folder, f"{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}_timestamp={int(time.time())}.png"), save_dpi=400)
     for name, item, item_target, color in zip(labels, ylist, y_true_list, color_list[:10]):
         m.add_subplot(
-            y_lists=[item.cpu().detach().numpy().flatten(), item_target.cpu().detach().numpy().flatten()],
+            y_lists=[item.flatten(), item_target.flatten()],
             x_list=model.accurate_x,
             color_list=[color, "black"],
             legend_list=["y_pred", "y_truth"],
