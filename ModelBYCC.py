@@ -120,7 +120,7 @@ class GroundTruthBYCC:
 class ConfigBYCC:
     def __init__(self):
         self.model_name = "ModelBYCC_Cluster"
-        self.T = 100.0 / 20.0
+        self.T = 100.0
         self.T_all = self.T
         self.T_unit = 0.1
         self.N = int(self.T / self.T_unit)
@@ -678,12 +678,13 @@ def train_BYCC(model, args, config, now_string):
         if epoch % epoch_step == 0:
             now_time = time.time()
             loss_print_part = " ".join(
-                ["Loss_{0:d}:{1:.6f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(loss_list)])
+                ["Loss_{0:d}:{1:.4f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(loss_list)])
             myprint(
-                "Epoch [{0:05d}/{1:05d}] Loss:{2:.6f} {3} Lr:{4:.6f} Time:{5:.6f}s ({6:.2f}min in total, {7:.2f}min remains)".format(
+                "Epoch [{0:05d}/{1:05d}] Real Loss: {8:.6f} Loss:{2:.6f} {3} Lr:{4:.8f} Time:{5:.2f}s ({6:.2f}min in total, {7:.2f}min remains)".format(
                     epoch, args.epoch, loss.item(), loss_print_part, optimizer.param_groups[0]["lr"],
                     now_time - start_time, (now_time - start_time_0) / 60.0,
-                    (now_time - start_time_0) / 60.0 / (epoch - start_index + 1) * (args.epoch - epoch)), args.log_path)
+                    (now_time - start_time_0) / 60.0 / (epoch - start_index + 1) * (args.epoch - epoch),
+                    real_loss.item()), args.log_path)
             start_time = time.time()
             torch.save(
                 {

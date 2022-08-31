@@ -52,7 +52,7 @@ if __name__ == "__main__":
     parser.add_argument("--name", type=str, default="test", help="name")
     parser.add_argument("--python", type=str, default="ModelBYCC.py", help="python file name")
     parser.add_argument("--epoch", type=int, default=100, help="epoch")
-    parser.add_argument("--log_path", type=str, default="logs/1.txt", help="log path")
+    parser.add_argument("--log_path", type=str, default="logs", help="log path")
     parser.add_argument("--mode", type=str, default="origin", help="continue or origin")
     parser.add_argument("--epoch_step", type=int, default=10, help="epoch_step")
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.001')
