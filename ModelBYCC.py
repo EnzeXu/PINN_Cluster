@@ -765,7 +765,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
 
     # y_pr = np.concatenate((Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14),axis = 1)
 
-    figure_save_path_folder = f"{args.main_path}/figure/{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}_timestamp={int(time.time())}/"
+    figure_save_path_folder = f"{args.main_path}/figure/{model.model_name}_id={args.seed}_{now_string}/"
     if not os.path.exists(figure_save_path_folder):
         os.makedirs(figure_save_path_folder)
     labels = ["Cln", "ClbSt", "MBF", "Nrm1t", "ClbMt", "Polo", "Sic1t", "SBF", "Cdh1", "Cdc14"]
@@ -778,9 +778,9 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
     line_style_list.extend([(0, (1, 1))] * 10)
     ylist = np.array([Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14]).reshape(10, -1)
     y_true_list = model.gt_data.cpu().detach().numpy().transpose()
-
+    test_now_string = get_now_string()
     m = MultiSubplotDraw(row=2, col=5, fig_size=(40, 12), tight_layout_flag=True, show_flag=False, save_flag=True,
-                         save_path="{}/{}".format(figure_save_path_folder, f"{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}_timestamp={int(time.time())}.png"), save_dpi=400)
+                         save_path="{}/{}".format(figure_save_path_folder, f"{test_now_string}_{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}.png"), save_dpi=400)
     for name, item, item_target, color in zip(labels, ylist, y_true_list, color_list[:10]):
         m.add_subplot(
             y_lists=[item.flatten(), item_target.flatten()],
@@ -807,7 +807,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
             fig_size=(8, 6),
             show_flag=False,
             save_flag=True,
-            save_path="{}/{}.png".format(figure_save_path_folder, labels[i])
+            save_path="{}/{}_{}.png".format(figure_save_path_folder, test_now_string, labels[i])
         )
 
 #
@@ -905,7 +905,7 @@ def run_BYCC_continue(args):
         y = y.cpu().detach().numpy()
         for one_x, one_y in zip(model.accurate_x, y):
             one_x = round(one_x, model.config.round_bit)
-            if not one_x in truth_x:
+            if one_x not in truth_x:
                 truth_x.append(one_x)
                 truth_y.append(one_y)
     real_loss_record_all = np.concatenate(real_loss_record_list)
