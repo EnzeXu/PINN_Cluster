@@ -793,23 +793,23 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
         )
     m.draw()
 
-    for i in range(len(labels)):
-        co = ['black', color_list[i]]
-        lege = [legend_list[i] + '_true', legend_list[i] + "_pred"]
-        line_style_list = ['dotted', 'solid']
-
-        draw_two_dimension_different_x(
-            y_lists=[y_true_list[i], ylist[i]],
-            x_lists=[x, x[:len(ylist[i])]],
-            color_list=co,
-            legend_list=lege,
-            line_style_list=line_style_list,
-            fig_title=None,
-            fig_size=(8, 6),
-            show_flag=False,
-            save_flag=True,
-            save_path="{}/{}_{}.png".format(figure_save_path_folder, test_now_string, labels[i])
-        )
+    # for i in range(len(labels)):
+    #     co = ['black', color_list[i]]
+    #     lege = [legend_list[i] + '_true', legend_list[i] + "_pred"]
+    #     line_style_list = ['dotted', 'solid']
+    #
+    #     draw_two_dimension_different_x(
+    #         y_lists=[y_true_list[i], ylist[i]],
+    #         x_lists=[x, x[:len(ylist[i])]],
+    #         color_list=co,
+    #         legend_list=lege,
+    #         line_style_list=line_style_list,
+    #         fig_title=None,
+    #         fig_size=(8, 6),
+    #         show_flag=False,
+    #         save_flag=True,
+    #         save_path="{}/{}_{}.png".format(figure_save_path_folder, test_now_string, labels[i])
+    #     )
 
 #
 # class Args:
