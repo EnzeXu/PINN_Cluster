@@ -786,16 +786,17 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
     line_style_list.extend([(0, (1, 1))] * 10)
     ylist = np.array([Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14]).reshape(10, -1)
     y_true_list = model.gt_data.cpu().detach().numpy().transpose()
+    y_memorized_list = np.asarray(model.truth[1]).transpose()
     test_now_string = get_now_string()
     m = MultiSubplotDraw(row=2, col=5, fig_size=(40, 12), tight_layout_flag=True, show_flag=False, save_flag=True,
                          save_path="{}/{}".format(figure_save_path_folder, f"{test_now_string}_{model.model_name}_id={args.seed}_{args.epoch}_{args.lr}_{now_string}.png"), save_dpi=400)
-    for name, item, item_target, color in zip(labels, ylist, y_true_list, color_list[:10]):
+    for name, item, item_target, item_memorized, color in zip(labels, ylist, y_true_list, y_memorized_list, color_list[:10]):
         m.add_subplot(
-            y_lists=[item.flatten(), item_target.flatten()],
+            y_lists=[item.flatten(), item_target.flatten(), item_memorized.flatten()],
             x_list=model.config.original_x_all,
-            color_list=[color, "black"],
-            legend_list=["y_pred", "y_truth"],
-            line_style_list=["solid", "dashed"],
+            color_list=[color, "black", "grey"],
+            legend_list=["y_pred", "y_truth", "y_memorized"],
+            line_style_list=["solid", "dashed", "dotted"],
             fig_title=name,
         )
     m.draw()
