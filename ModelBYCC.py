@@ -675,7 +675,7 @@ def train_BYCC(model, args, config, now_string):
 
         loss_record.append(float(loss.item()))
         real_loss_record.append(float(real_loss.item()))
-        if epoch % epoch_step == 0:
+        if epoch % epoch_step == 0 or epoch == args.epoch:
             now_time = time.time()
             loss_print_part = " ".join(
                 ["Loss_{0:d}:{1:.4f}".format(i + 1, loss_part.item()) for i, loss_part in enumerate(loss_list)])
@@ -886,7 +886,7 @@ def run_BYCC_continue(args):
         myprint("i = {}, length of truth = {} now".format(i, len(truth_x)), args.log_path)
 
         model = SimpleNetworkBYCC(config, args, [truth_x, truth_y]).to(device)
-        if i > 0:
+        if i > 0:  #id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_best.pt
             model_state_dict_path = f"{args.main_path}/train/{config.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
             model.load_state_dict(torch.load(model_state_dict_path, map_location=device)["model_state_dict"])
             myprint("Load previous trained model from {} successfully!".format(model_state_dict_path), args.log_path)
