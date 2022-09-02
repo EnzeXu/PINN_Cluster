@@ -163,15 +163,15 @@ class SimpleNetworkBYCC(nn.Module):
         self.config = config
         self.args = args
         myprint("self.truth_length: {} of {} all ".format(self.config.truth_length, self.config.N), self.args.log_path)
-        self.setup_seed(args.seed)
-        myprint("seed = {}".format(args.seed), self.args.log_path)
+        self.setup_seed(self.args.seed)
+        myprint("seed = {}".format(self.args.seed), self.args.log_path)
         self.device = self.config.device
         self.x, self.y0, self.t0 = None, None, None
         self.accurate_x = None
         self.generate_x()
 
         self.initial_start()
-        self.model_name = self.config.model_name
+        self.model_name = "{}_{}".format(self.config.model_name, self.args.mode)
         self.gt = self.config.gt
         self.gt_data = torch.Tensor(self.gt.sol).to(self.device)
         self.y_record = None
@@ -767,7 +767,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
 
     # y_pr = np.concatenate((Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14),axis = 1)
 
-    figure_save_path_folder = f"{args.main_path}/figure/{model.model_name}_id={args.seed}_{now_string}/"
+    figure_save_path_folder = f"{args.main_path}/figure/{model.model_name}_id={args.seed}_{args.overall_start}/"
     myprint("[Continue] Test: save figure in {}".format(figure_save_path_folder), args.log_path)
     if not os.path.exists(figure_save_path_folder):
         os.makedirs(figure_save_path_folder)
@@ -873,6 +873,7 @@ def run_BYCC_continue(args):
     truth_y = []
 
     real_loss_record_list = []
+    model_default = SimpleNetworkBYCC(config_0, args).to(device)
     for i in range(continue_n):
 
         config = ConfigBYCCComplete()
@@ -889,7 +890,7 @@ def run_BYCC_continue(args):
 
         model = SimpleNetworkBYCC(config, args, [truth_x, truth_y]).to(device)
         if i > 0:  #id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_best.pt
-            model_state_dict_path = f"{args.main_path}/train/{config.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
+            model_state_dict_path = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
             model.load_state_dict(torch.load(model_state_dict_path, map_location=device)["model_state_dict"])
             myprint("Load previous trained model from {} successfully!".format(model_state_dict_path), args.log_path)
             myprint("Test before training...", args.log_path)
@@ -897,12 +898,12 @@ def run_BYCC_continue(args):
             # test_turing(model, args, config, now_string_list[-1], True)
         now_string_list.append(now_string)
         model, res_dic = train_BYCC(model, args, config, now_string)
-        with open(f"{args.main_path}/train/{config.model_name}_id={args.seed}_{now_string}_i={i}.model", "wb") as f:
+        with open(f"{args.main_path}/train/{model.model_name}_id={args.seed}_{now_string}_i={i}.model", "wb") as f:
             pickle.dump(model, f)
         real_loss_record_list.append(res_dic["real_loss_record"])
         myprint("[Continual Step Result on i = {}]".format(i), args.log_path)
         draw_loss(np.concatenate(real_loss_record_list))
-        np.save(f"{args.main_path}/train/{config.model_name}_id={args.seed}_{now_string}_real_loss_record_i={i}.pt",
+        np.save(f"{args.main_path}/train/{model.model_name}_id={args.seed}_{now_string}_real_loss_record_i={i}.pt",
                 np.concatenate(real_loss_record_list))
         y = model(model.x)
         y = y.cpu().detach().numpy()
@@ -914,7 +915,7 @@ def run_BYCC_continue(args):
     real_loss_record_all = np.concatenate(real_loss_record_list)
     myprint("[Final Result]", args.log_path)
     draw_loss(real_loss_record_all)
-    real_loss_all_path = f"{args_0.main_path}/loss/{config_0.model_name}_id={args.seed}_{now_string}_real_loss_all.npy"
+    real_loss_all_path = f"{args_0.main_path}/loss/{model_default.model_name}_id={args.seed}_{now_string}_real_loss_all.npy"
     np.save(real_loss_all_path, real_loss_record_all)
     myprint("real_loss_all is saved to {} (length={})".format(real_loss_all_path, len(real_loss_record_all)), args.log_path)
 
@@ -930,6 +931,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_step", type=int, default=100, help="save_step")
     parser.add_argument("--seed", type=int, default=100, help="seed")
     opt = parser.parse_args()
+    opt.overall_start = get_now_string()
 
     myprint("log_path: {}".format(opt.log_path), opt.log_path)
     myprint("cuda is available: {}".format(torch.cuda.is_available()), opt.log_path)
