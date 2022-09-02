@@ -701,7 +701,7 @@ def train_BYCC(model, args, config, now_string):
                         # 'optimizer_state_dict': optimizer.state_dict(),
                         'loss': loss.item()
                     }, model_save_path_best)
-        if epoch % args.save_step == 0 or epoch == args.save_step:
+        if epoch % args.save_step == 0 or epoch == args.epoch:
             test_BYCC(model, args, config, now_string, True)
             myprint("[Loss]", args.log_path)
             draw_loss(np.asarray(loss_record), 1.0)
