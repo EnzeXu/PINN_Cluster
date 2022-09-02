@@ -147,6 +147,7 @@ class ConfigBYCCComplete(ConfigBYCC):
     def __init__(self):
         ConfigBYCC.__init__(self)
         self.gt = GroundTruthBYCC()
+        self.original_x_all = [i * self.T_unit for i in range(self.N)]
         self.x_real = torch.tensor(
             np.asarray([[i * self.T_unit] * 10 for i in range(self.N)]) / self.T_all * 2.0 - 1.0).float().to(
             self.device)
@@ -786,7 +787,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
     for name, item, item_target, color in zip(labels, ylist, y_true_list, color_list[:10]):
         m.add_subplot(
             y_lists=[item.flatten(), item_target.flatten()],
-            x_list=model.accurate_x,
+            x_list=model.config.original_x_all,
             color_list=[color, "black"],
             legend_list=["y_pred", "y_truth"],
             line_style_list=["solid", "dashed"],

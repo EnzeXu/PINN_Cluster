@@ -335,7 +335,8 @@ class MultiSubplotDraw:
         self.subplot_index += 1
         ax = self.fig.add_subplot(self.row, self.col, self.subplot_index)
         for i in range(y_count):
-            ax.plot(x_list, y_lists[i], markersize=marker_size, linewidth=line_width, c=color_list[i], linestyle=line_style_list[i])
+            draw_length = min(len(x_list), len(y_lists[i]))
+            ax.plot(x_list[:draw_length], y_lists[i][:draw_length], markersize=marker_size, linewidth=line_width, c=color_list[i], linestyle=line_style_list[i])
         ax.set_xlabel(fig_x_label, fontsize=x_label_size)
         ax.set_ylabel(fig_y_label, fontsize=y_label_size)
         if x_ticks_set_flag:
