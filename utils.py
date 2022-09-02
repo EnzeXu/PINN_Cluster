@@ -329,7 +329,7 @@ class MultiSubplotDraw:
             y_ticks_set_flag=False,
             y_ticks=None,
     ) -> None:
-        assert len(list(y_lists[0])) == len(list(x_list)), "Dimension of y should be same to that of x"
+        # assert len(list(y_lists[0])) == len(list(x_list)), "Dimension of y should be same to that of x"
         assert len(y_lists) == len(line_style_list) == len(color_list), "number of lines should be fixed"
         y_count = len(y_lists)
         self.subplot_index += 1
