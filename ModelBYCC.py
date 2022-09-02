@@ -767,6 +767,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
     # y_pr = np.concatenate((Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14),axis = 1)
 
     figure_save_path_folder = f"{args.main_path}/figure/{model.model_name}_id={args.seed}_{now_string}/"
+    myprint("[Continue] Test: save figure in {}".format(figure_save_path_folder), args.log_path)
     if not os.path.exists(figure_save_path_folder):
         os.makedirs(figure_save_path_folder)
     labels = ["Cln", "ClbSt", "MBF", "Nrm1t", "ClbMt", "Polo", "Sic1t", "SBF", "Cdh1", "Cdc14"]
