@@ -639,7 +639,7 @@ def train_BYCC(model, args, config, now_string):
     # model = model_framework(config).to(device)
     model.train()
     model_save_path_last = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_last.pt"
-    model_save_path_best = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_best.pt"  # f"{args.main_path}/train/{config.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
+    # model_save_path_best = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_best.pt"  # f"{args.main_path}/train/{config.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
     loss_save_path = f"{args.main_path}/loss/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_loss_{args.epoch}.npy"
     real_loss_save_path = f"{args.main_path}/loss/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_real_loss_{args.epoch}.npy"
     myprint("using {}".format(str(device)), args.log_path)
@@ -648,7 +648,7 @@ def train_BYCC(model, args, config, now_string):
     myprint("model_name = {}".format(model.model_name), args.log_path)
     myprint("now_string = {}".format(now_string), args.log_path)
     myprint("model_save_path_last = {}".format(model_save_path_last), args.log_path)
-    myprint("model_save_path_best = {}".format(model_save_path_best), args.log_path)
+    # myprint("model_save_path_best = {}".format(model_save_path_best), args.log_path)
     # optimizer = optim.Adam(model.parameters(), lr=args.lr)
     initial_lr = args.lr
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
@@ -699,14 +699,14 @@ def train_BYCC(model, args, config, now_string):
                     # 'optimizer_state_dict': optimizer.state_dict(),
                     'loss': loss.item()
                 }, model_save_path_last)
-            if loss.item() < best_loss:
-                torch.save(
-                    {
-                        'epoch': args.epoch,
-                        'model_state_dict': model.state_dict(),
-                        # 'optimizer_state_dict': optimizer.state_dict(),
-                        'loss': loss.item()
-                    }, model_save_path_best)
+            # if loss.item() < best_loss:
+            #     torch.save(
+            #         {
+            #             'epoch': args.epoch,
+            #             'model_state_dict': model.state_dict(),
+            #             # 'optimizer_state_dict': optimizer.state_dict(),
+            #             'loss': loss.item()
+            #         }, model_save_path_best)
         if epoch % args.save_step == 0 or epoch == args.epoch:
             test_BYCC(model, args, config, now_string, True)
             myprint("[Loss]", args.log_path)
@@ -723,7 +723,7 @@ def train_BYCC(model, args, config, now_string):
         "start_time": start_time_0,
         "epoch": args.epoch,
         "model_save_path_last": model_save_path_last,
-        "model_save_path_best": model_save_path_best,
+        # "model_save_path_best": model_save_path_best,
         "loss_save_path": loss_save_path,
         "real_loss_save_path": real_loss_save_path,
         "best_loss": best_loss,
@@ -895,7 +895,7 @@ def run_BYCC_continue(args):
 
         model = SimpleNetworkBYCC(config, args, [truth_x, truth_y]).to(device)
         if i > 0:  #id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_best.pt
-            model_state_dict_path = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
+            model_state_dict_path = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_last.pt"
             model.load_state_dict(torch.load(model_state_dict_path, map_location=device)["model_state_dict"])
             myprint("Load previous trained model from {} successfully!".format(model_state_dict_path), args.log_path)
             myprint("Test before training...", args.log_path)
