@@ -632,10 +632,10 @@ def train_BYCC(model, args, config, now_string):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model = model_framework(config).to(device)
     model.train()
-    model_save_path_last = f"{args.main_path}/train/{model.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_last.pt"
-    model_save_path_best = f"{args.main_path}/train/{model.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_best.pt"  # f"{args.main_path}/train/{config.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
-    loss_save_path = f"{args.main_path}/loss/{model.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_loss_{args.epoch}.npy"
-    real_loss_save_path = f"{args.main_path}/loss/{model.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_real_loss_{args.epoch}.npy"
+    model_save_path_last = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_last.pt"
+    model_save_path_best = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_best.pt"  # f"{args.main_path}/train/{config.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
+    loss_save_path = f"{args.main_path}/loss/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_loss_{args.epoch}.npy"
+    real_loss_save_path = f"{args.main_path}/loss/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_real_loss_{args.epoch}.npy"
     myprint("using {}".format(str(device)), args.log_path)
     myprint("epoch = {}".format(args.epoch), args.log_path)
     myprint("epoch_step = {}".format(args.epoch_step), args.log_path)
@@ -730,8 +730,8 @@ def train_BYCC(model, args, config, now_string):
 def test_BYCC(model, args, config, now_string, show_flag=True):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model = model_framework(config).to(device)
-    model_save_path = f"{args.main_path}/train/{model.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_last.pt"
-    model.load_state_dict(torch.load(model_save_path, map_location=device)["model_state_dict"])
+    # model_save_path = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_last.pt"
+    # model.load_state_dict(torch.load(model_save_path, map_location=device)["model_state_dict"])
     model.eval()
     t = model.x
     y = model(t)
@@ -781,7 +781,7 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
     y_true_list = model.gt_data.cpu().detach().numpy().transpose()
     test_now_string = get_now_string()
     m = MultiSubplotDraw(row=2, col=5, fig_size=(40, 12), tight_layout_flag=True, show_flag=False, save_flag=True,
-                         save_path="{}/{}".format(figure_save_path_folder, f"{test_now_string}_{model.model_name}_{args.epoch}_{args.lr}_{now_string}_id={args.seed}.png"), save_dpi=400)
+                         save_path="{}/{}".format(figure_save_path_folder, f"{test_now_string}_{model.model_name}_id={args.seed}_{args.epoch}_{args.lr}_{now_string}.png"), save_dpi=400)
     for name, item, item_target, color in zip(labels, ylist, y_true_list, color_list[:10]):
         m.add_subplot(
             y_lists=[item.flatten(), item_target.flatten()],
@@ -887,7 +887,7 @@ def run_BYCC_continue(args):
 
         model = SimpleNetworkBYCC(config, args, [truth_x, truth_y]).to(device)
         if i > 0:
-            model_state_dict_path = f"{args.main_path}/train/{config.model_name}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
+            model_state_dict_path = f"{args.main_path}/train/{config.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string_list[-1]}_best.pt"
             model.load_state_dict(torch.load(model_state_dict_path, map_location=device)["model_state_dict"])
             myprint("Load previous trained model from {} successfully!".format(model_state_dict_path), args.log_path)
             myprint("Test before training...", args.log_path)
@@ -895,12 +895,12 @@ def run_BYCC_continue(args):
             # test_turing(model, args, config, now_string_list[-1], True)
         now_string_list.append(now_string)
         model, res_dic = train_BYCC(model, args, config, now_string)
-        with open(f"{args.main_path}/train/{config.model_name}_{now_string}_i={i}.model", "wb") as f:
+        with open(f"{args.main_path}/train/{config.model_name}_id={args.seed}_{now_string}_i={i}.model", "wb") as f:
             pickle.dump(model, f)
         real_loss_record_list.append(res_dic["real_loss_record"])
         myprint("[Continual Step Result on i = {}]".format(i), args.log_path)
         draw_loss(np.concatenate(real_loss_record_list))
-        np.save(f"{args.main_path}/train/{config.model_name}_{now_string}_real_loss_record_i={i}.pt",
+        np.save(f"{args.main_path}/train/{config.model_name}_id={args.seed}_{now_string}_real_loss_record_i={i}.pt",
                 np.concatenate(real_loss_record_list))
         y = model(model.x)
         y = y.cpu().detach().numpy()
@@ -912,7 +912,7 @@ def run_BYCC_continue(args):
     real_loss_record_all = np.concatenate(real_loss_record_list)
     myprint("[Final Result]", args.log_path)
     draw_loss(real_loss_record_all)
-    real_loss_all_path = f"{args_0.main_path}/loss/{config_0.model_name}_{now_string}_real_loss_all.npy"
+    real_loss_all_path = f"{args_0.main_path}/loss/{config_0.model_name}_id={args.seed}_{now_string}_real_loss_all.npy"
     np.save(real_loss_all_path, real_loss_record_all)
     myprint("real_loss_all is saved to {} (length={})".format(real_loss_all_path, len(real_loss_record_all)), args.log_path)
 
