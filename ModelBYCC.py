@@ -176,10 +176,10 @@ class SimpleNetworkBYCC(nn.Module):
         self.gt_data = torch.Tensor(self.gt.sol).to(self.device)
         self.y_record = None
 
-        self.loss_1_start_index = int(
-            self.config.T_all * self.config.continue_period / self.config.T_unit * (self.config.continue_id - 1))
+        self.loss_1_end_index = int(
+            self.config.T_all * self.config.continue_period / self.config.T_unit * self.config.continue_id)
         if self.config.continue_id >= 1:
-            myprint("[Continue] loss_1 index: {} - {}".format(self.loss_1_start_index, self.loss_1_start_index + self.config.truth_length), self.args.log_path)
+            myprint("[Continue] loss_1 index: {} - {}".format(0, self.loss_1_end_index), self.args.log_path)
 
         self.sig = nn.Tanh()
 
@@ -586,8 +586,8 @@ class SimpleNetworkBYCC(nn.Module):
             #     memorized_truth[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :].shape))
 
             loss_1 = 100 * self.loss_norm(
-                y[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :],
-                memorized_truth[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :])
+                y[:self.loss_1_end_index, :],
+                memorized_truth[:self.loss_1_end_index, :])
         # loss_1 = torch.mean(torch.square(self.y0 - y0_pred))
         loss_2 = 1000 * torch.mean(torch.square(f_y))  # + torch.var(torch.square(f_y))
         loss_3 = 1e6 * torch.mean(torch.square((torch.abs(Cln) - Cln))) + 10 * torch.mean(
