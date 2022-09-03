@@ -177,12 +177,13 @@ class SimpleNetworkBYCC(nn.Module):
         self.y_record = None
 
         self.loss_1_start_index = int(
-            self.config.T_all * self.config.continue_period / self.config.T_unit * self.config.continue_id)
-        myprint("[Continue] loss_1_start_index: ".format(self.loss_1_start_index), self.args.log_path)
+            self.config.T_all * self.config.continue_period / self.config.T_unit * (self.config.continue_id - 1))
+        if self.config.continue_id >= 1:
+            myprint("[Continue] loss_1 index: {} - {}".format(self.loss_1_start_index, self.loss_1_start_index + self.config.truth_length), self.args.log_path)
 
         self.sig = nn.Tanh()
 
-        self.loss_norm = RMSELoss
+        self.loss_norm = RMSELoss  # nn.MSELoss()
         self.truth = truth if truth else [[], []]
         self.truth_dic = {round(self.truth[0][i], self.config.round_bit): self.truth[1][i] for i in
                           range(len(self.truth[0]))}
@@ -555,7 +556,7 @@ class SimpleNetworkBYCC(nn.Module):
         f_Cdc14 = Cdc14_t - Cdc14_t_target
 
         f_y = torch.cat((f_Cln, f_ClbSt, f_MBF, f_Nrm1t, f_ClbMt, f_Polo, f_Sic1t, f_SBF, f_Cdh1, f_Cdc14), 1)
-        y0_pred = self.forward(self.t0)
+        # y0_pred = self.forward(self.t0)
 
         # nn = 20
         # nnn = int(self.config.N / nn)
@@ -568,15 +569,25 @@ class SimpleNetworkBYCC(nn.Module):
         # for point in point_list:
         #   loss_1 += 100 * self.loss_norm(y[point, :], self.gt_y[point, :])
         if self.config.continue_id == 0:
-            loss_1 = 100 * self.loss_norm(y[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :],
-                                          self.gt_data[
-                                          self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :])
+            loss_1 = 100 * self.loss_norm(y[0: 1, :], self.gt_data[0: 1, :])
         else:
-            memorized_truth = torch.tensor(self.truth[1]).to(self.device)
-            print("[Continue] memorized_truth shape = {}".format(memorized_truth.shape))
+            memorized_truth = torch.tensor(np.asarray(self.truth[1]), dtype=torch.float32).to(self.device)
+            # print(memorized_truth.dtype)
+            # print(y.dtype)
+            # print(self.gt_data.dtype)
+            # myprint("[Continue] memorized_truth shape = {}".format(memorized_truth.shape), self.args.log_path)
+            # myprint("[Continue] y shape = {}".format(y.shape), self.args.log_path)
+            # myprint("[Continue] self.gt_data shape = {}".format(self.gt_data.shape), self.args.log_path)
+            # # print("memorized_truth", memorized_truth)
+            # # print("y", y)
+            # # print("self.gt_data", self.gt_data)
+            # print("y_slices = {}".format(y[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :].shape))
+            # print("memorized_truth_slices = {}".format(
+            #     memorized_truth[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :].shape))
+
             loss_1 = 100 * self.loss_norm(
                 y[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :],
-                memorized_truth.reshape(len(self.truth[1]), -1)[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :])
+                memorized_truth[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :])
         # loss_1 = torch.mean(torch.square(self.y0 - y0_pred))
         loss_2 = 1000 * torch.mean(torch.square(f_y))  # + torch.var(torch.square(f_y))
         loss_3 = 1e6 * torch.mean(torch.square((torch.abs(Cln) - Cln))) + 10 * torch.mean(
@@ -607,7 +618,7 @@ class SimpleNetworkBYCC(nn.Module):
             return torch.Tensor([0.0]).to(self.device)
         diff = [np.abs(y_tmp - self.truth_dic.get(round(x_tmp, self.config.round_bit))) for x_tmp, y_tmp in zip(x, y) if
                 round(x_tmp, self.config.round_bit) in self.truth_dic]
-        diff = torch.Tensor(diff).to(self.device)
+        diff = torch.Tensor(np.asarray(diff)).to(self.device)
         zeros_10D = torch.Tensor([[0.0] * 10] * len(diff)).to(self.device)
         loss_truth_match = self.loss_norm(diff, zeros_10D)
         if len(diff) != len(self.truth[0]):
