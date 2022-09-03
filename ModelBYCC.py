@@ -572,10 +572,11 @@ class SimpleNetworkBYCC(nn.Module):
                                           self.gt_data[
                                           self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :])
         else:
+            memorized_truth = torch.tensor(self.truth[1]).to(self.device)
+            print("[Continue] memorized_truth shape = {}".format(memorized_truth.shape))
             loss_1 = 100 * self.loss_norm(
                 y[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :],
-                torch.tensor(self.truth[1]).to(self.device).reshape(len(self.truth[1]), -1)[
-                self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :])
+                memorized_truth.reshape(len(self.truth[1]), -1)[self.loss_1_start_index:self.loss_1_start_index + self.config.truth_length, :])
         # loss_1 = torch.mean(torch.square(self.y0 - y0_pred))
         loss_2 = 1000 * torch.mean(torch.square(f_y))  # + torch.var(torch.square(f_y))
         loss_3 = 1e6 * torch.mean(torch.square((torch.abs(Cln) - Cln))) + 10 * torch.mean(
