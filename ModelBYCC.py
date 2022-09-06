@@ -136,7 +136,7 @@ class ConfigBYCC:
         self.truth_length = 1  # int(self.truth_rate * self.T / self.T_unit)
 
         self.continuous_flag = False
-        self.continue_period = 0.05
+        self.continue_period = 0.01
         self.round_bit = 3
         self.continue_id = 0
 
