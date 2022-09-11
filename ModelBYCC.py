@@ -173,7 +173,7 @@ class SimpleNetworkBYCC(nn.Module):
         self.initial_start()
         self.model_name = "{}_{}".format(self.config.model_name, self.args.mode)
         self.gt = self.config.gt
-        self.gt_data = torch.Tensor(self.gt.sol).to(self.device)
+        self.gt_data = torch.tensor(self.gt.sol, dtype=torch.float32).to(self.device)
         self.y_record = None
 
         self.loss_1_end_index = int(
@@ -182,8 +182,12 @@ class SimpleNetworkBYCC(nn.Module):
             myprint("[Continue] loss_1 index: {} - {}".format(0, self.loss_1_end_index), self.args.log_path)
 
         self.sig = nn.Tanh()
+        self.loss_norm = nn.MSELoss()
+        self.zeros_10D = torch.tensor(np.asarray([[0.0] * 10] * self.config.N), dtype=torch.float32).to(self.device)
+        self.zeros_1D = torch.tensor(np.asarray([[0.0]] * self.config.N), dtype=torch.float32).to(self.device)
+        self.loss_2_weight_numpy = None
 
-        self.loss_norm = RMSELoss  # nn.MSELoss()
+        # self.loss_norm = RMSELoss  # nn.MSELoss()
         self.truth = truth if truth else [[], []]
         self.truth_dic = {round(self.truth[0][i], self.config.round_bit): self.truth[1][i] for i in
                           range(len(self.truth[0]))}
@@ -325,6 +329,16 @@ class SimpleNetworkBYCC(nn.Module):
             [Cln_start, ClbSt_start, MBF_start, Nrm1t_start, ClbMt_start, Polo_start, Sic1t_start, SBF_start,
              Cdh1_start, Cdc14_start]).reshape([1, -1])).float().to(self.device)
 
+
+    # def calculate_jacobian(self, y, y_t):
+    #     Cln, ClbSt, MBF, Nrm1t, ClbMt, Polo, Sic1t, SBF, Cdh1, Cdc14 = y[0], y[1], y[2], y[3], y[4], y[5], y[6], y[7], y[8], y[9]
+    #     Cln_t, ClbSt_t, MB_t, Nrm1t_t, ClbMt_t, Polo_t, Sic1t_t, SBF_t, Cdh1_t, Cdc14_t = y_t[0], y_t[1], y_t[2], y_t[3], y_t[4], y_t[5], y_t[6], y_t[7], y_t[8], y_t[9]
+    #     calculated_part_list = []
+    #     for i in range(10):
+    #         for j in range(10):
+    #             pass
+
+
     def loss_only_ground_truth(self):
         self.eval()
         y = self.forward(self.x)
@@ -448,7 +462,7 @@ class SimpleNetworkBYCC(nn.Module):
         real_loss = self.loss_norm(y[:self.config.N, :], self.gt_data[:self.config.N, :])
         return real_loss
 
-    def loss(self):
+    def loss(self, epoch=None):
         self.eval()
         y = self.forward(self.x)
         Cln = y[:, 0:1]
@@ -589,24 +603,30 @@ class SimpleNetworkBYCC(nn.Module):
                 y[:self.loss_1_end_index, :],
                 memorized_truth[:self.loss_1_end_index, :])
         # loss_1 = torch.mean(torch.square(self.y0 - y0_pred))
-        loss_2 = 1000 * torch.mean(torch.square(f_y))  # + torch.var(torch.square(f_y))
-        loss_3 = 1e6 * torch.mean(torch.square((torch.abs(Cln) - Cln))) + 10 * torch.mean(
-            torch.square((torch.abs(ClbSt) - ClbSt))) + 10 * torch.mean(
-            torch.square((torch.abs(MBF) - MBF))) + 10 * torch.mean(
-            torch.square((torch.abs(Nrm1t) - Nrm1t))) + 10 * torch.mean(
-            torch.square((torch.abs(ClbMt) - ClbMt))) + 10 * torch.mean(
-            torch.square((torch.abs(Polo) - Polo))) + 10 * torch.mean(
-            torch.square((torch.abs(Sic1t) - Sic1t))) + 10 * torch.mean(
-            torch.square((torch.abs(SBF) - SBF))) + 10 * torch.mean(
-            torch.square((torch.abs(Cdh1) - Cdh1))) + 10 * torch.mean(torch.square((torch.abs(Cdc14) - Cdc14)))
-        loss_4 = torch.mean(torch.nn.functional.relu(Cln - 1)) + torch.mean(
-            torch.nn.functional.relu(ClbSt - 1)) + torch.mean(torch.nn.functional.relu(MBF - 1)) + torch.mean(
-            torch.nn.functional.relu(Nrm1t - 1)) + torch.mean(torch.nn.functional.relu(ClbMt - 1)) + torch.mean(
-            torch.nn.functional.relu(Polo - 1)) + torch.mean(torch.nn.functional.relu(Sic1t - 1)) + torch.mean(
-            torch.nn.functional.relu(SBF - 1)) + torch.mean(torch.nn.functional.relu(Cdh1 - 1)) + torch.mean(
-            torch.nn.functional.relu(Cdc14 - 1))
-        loss_5 = 1e6 * torch.mean(torch.square((torch.abs(Cdc14) - Cdc14)))
-        loss_6 = 1000 * self.match_truth(self.accurate_x, y.cpu().detach().numpy())
+        if self.args.sw:
+            self.loss_2_weight_numpy = generate_normal_distribution_weight(self.config.N, 10, (epoch % int(self.args.sw_step)) / self.args.sw_step)
+            loss_2 = 1e3 * self.loss_norm(f_y * torch.tensor(self.loss_2_weight_numpy, dtype=torch.float32).to(self.device), self.zeros_10D)
+        else:
+            loss_2 = 1e3 * self.loss_norm(f_y, self.zeros_10D)  # + torch.var(torch.square(f_y))
+        loss_3 = 1e6 * self.loss_norm(torch.abs(y), y)
+        # loss_3 = 1e6 * torch.mean(torch.square((torch.abs(Cln) - Cln))) + 10 * torch.mean(
+        #     torch.square((torch.abs(ClbSt) - ClbSt))) + 10 * torch.mean(
+        #     torch.square((torch.abs(MBF) - MBF))) + 10 * torch.mean(
+        #     torch.square((torch.abs(Nrm1t) - Nrm1t))) + 10 * torch.mean(
+        #     torch.square((torch.abs(ClbMt) - ClbMt))) + 10 * torch.mean(
+        #     torch.square((torch.abs(Polo) - Polo))) + 10 * torch.mean(
+        #     torch.square((torch.abs(Sic1t) - Sic1t))) + 10 * torch.mean(
+        #     torch.square((torch.abs(SBF) - SBF))) + 10 * torch.mean(
+        #     torch.square((torch.abs(Cdh1) - Cdh1))) + 10 * torch.mean(torch.square((torch.abs(Cdc14) - Cdc14)))
+        loss_4 = 1e6 * self.loss_norm(torch.abs(1.0 - y), (1.0 - y))
+        # loss_4 = torch.mean(torch.nn.functional.relu(Cln - 1)) + torch.mean(
+        #     torch.nn.functional.relu(ClbSt - 1)) + torch.mean(torch.nn.functional.relu(MBF - 1)) + torch.mean(
+        #     torch.nn.functional.relu(Nrm1t - 1)) + torch.mean(torch.nn.functional.relu(ClbMt - 1)) + torch.mean(
+        #     torch.nn.functional.relu(Polo - 1)) + torch.mean(torch.nn.functional.relu(Sic1t - 1)) + torch.mean(
+        #     torch.nn.functional.relu(SBF - 1)) + torch.mean(torch.nn.functional.relu(Cdh1 - 1)) + torch.mean(
+        #     torch.nn.functional.relu(Cdc14 - 1))
+        loss_5 = 1e6 * self.loss_norm(torch.abs(Cdc14), Cdc14)
+        loss_6 = 1e3 * self.match_truth(self.accurate_x, y.cpu().detach().numpy())
         loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5 + loss_6
 
         self.train()
@@ -619,8 +639,8 @@ class SimpleNetworkBYCC(nn.Module):
         diff = [np.abs(y_tmp - self.truth_dic.get(round(x_tmp, self.config.round_bit))) for x_tmp, y_tmp in zip(x, y) if
                 round(x_tmp, self.config.round_bit) in self.truth_dic]
         diff = torch.Tensor(np.asarray(diff)).to(self.device)
-        zeros_10D = torch.Tensor([[0.0] * 10] * len(diff)).to(self.device)
-        loss_truth_match = self.loss_norm(diff, zeros_10D)
+        # zeros_10D = torch.Tensor([[0.0] * 10] * len(diff)).to(self.device)
+        loss_truth_match = self.loss_norm(diff, self.zeros_10D)
         if len(diff) != len(self.truth[0]):
             myprint("Error: match_truth: {} / {} items to match, loss_truth_match = {}".format(len(diff),
                                                                                              len(self.truth[0]),
@@ -684,7 +704,7 @@ def train_BYCC(model, args, config, now_string):
             loss, loss_list = model.loss_only_ground_truth()
             # loss_2 = loss_list[1]
         else:
-            loss, loss_list = model.loss()
+            loss, loss_list = model.loss(epoch)
             # loss_1, loss_2, loss_3, loss_4, loss_5 = loss_list[0], loss_list[1], loss_list[2], loss_list[3], loss_list[4]
         real_loss = model.real_loss()
         loss.backward()
@@ -746,14 +766,14 @@ def train_BYCC(model, args, config, now_string):
 
 
 def test_BYCC(model, args, config, now_string, show_flag=True):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model = model_framework(config).to(device)
     # model_save_path = f"{args.main_path}/train/{model.model_name}_id={args.seed}_{args.epoch}_{args.epoch_step}_{args.lr}_{now_string}_last.pt"
     # model.load_state_dict(torch.load(model_save_path, map_location=device)["model_state_dict"])
     model.eval()
     t = model.x
     y = model(t)
-    y0_pred = model(model.t0)
+    # y0_pred = model(model.t0)
     Cln = y[:, 0:1]
     ClbSt = y[:, 1:2]
     MBF = y[:, 2:3]
@@ -800,18 +820,52 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
     y_true_list = model.gt_data.cpu().detach().numpy().transpose()
     y_memorized_list = np.asarray(model.truth[1]).transpose()
     test_now_string = get_now_string()
-    m = MultiSubplotDraw(row=2, col=5, fig_size=(40, 12), tight_layout_flag=True, show_flag=False, save_flag=True,
-                         save_path="{}/{}".format(figure_save_path_folder, f"{test_now_string}_{model.model_name}_id={args.seed}_{args.epoch}_{args.lr}_{now_string}.png"), save_dpi=400)
-    for name, item, item_target, item_memorized, color in zip(labels, ylist, y_true_list, y_memorized_list, color_list[:10]):
-        m.add_subplot(
-            y_lists=[item.flatten(), item_target.flatten(), item_memorized.flatten()],
-            x_list=model.config.original_x_all,
-            color_list=[color, "black", "grey"],
-            legend_list=["y_pred", "y_truth", "y_memorized"],
-            line_style_list=["solid", "dashed", "dotted"],
-            fig_title=name,
-        )
-    m.draw()
+
+    if args.mode == "continue" and len(y_memorized_list) > 0:
+        m = MultiSubplotDraw(row=2, col=5, fig_size=(40, 12), tight_layout_flag=True, show_flag=False, save_flag=True,
+                             save_path="{}/{}".format(figure_save_path_folder, f"{test_now_string}_{model.model_name}_id={args.seed}_{args.epoch}_{args.lr}_{now_string}.png"), save_dpi=400)
+        for name, item, item_target, item_memorized, color in zip(labels, ylist, y_true_list, y_memorized_list, color_list[:10]):
+            m.add_subplot(
+                y_lists=[item.flatten(), item_target.flatten(), item_memorized.flatten()],
+                x_list=model.config.original_x_all,
+                color_list=[color, "black", "grey"],
+                legend_list=["y_pred", "y_truth", "y_memorized"],
+                line_style_list=["solid", "dashed", "dotted"],
+                fig_title=name,
+            )
+        m.draw()
+    else:
+        m = MultiSubplotDraw(row=2, col=5, fig_size=(40, 12), tight_layout_flag=True, show_flag=False, save_flag=True,
+                             save_path="{}/{}".format(figure_save_path_folder,
+                                                      f"{test_now_string}_{model.model_name}_id={args.seed}_{args.epoch}_{args.lr}_{now_string}.png"),
+                             save_dpi=400)
+        for name, item, item_target, color in zip(labels, ylist, y_true_list, color_list[:10]):
+            m.add_subplot(
+                y_lists=[item.flatten(), item_target.flatten()],
+                x_list=model.config.original_x_all,
+                color_list=[color, "black"],
+                legend_list=["y_pred", "y_truth"],
+                line_style_list=["solid", "dashed"],
+                fig_title=name,
+            )
+        m.draw()
+    if args.sw:
+        m = MultiSubplotDraw(row=2, col=5, fig_size=(40, 12), tight_layout_flag=True, show_flag=False, save_flag=True,
+                             save_path="{}/{}".format(figure_save_path_folder,
+                                                      f"{test_now_string}_{model.model_name}_id={args.seed}_{args.epoch}_{args.lr}_{now_string}_sw.png"),
+                             save_dpi=400)
+        sw_weight = model.loss_2_weight_numpy.flatten()
+        sw_weight = sw_weight / np.max(sw_weight)
+        for name, item, item_target, color in zip(labels, ylist, y_true_list, color_list[:10]):
+            m.add_subplot(
+                y_lists=[item.flatten(), item_target.flatten(), sw_weight],
+                x_list=model.config.original_x_all,
+                color_list=[color, "black", "darkcyan"],
+                legend_list=["y_pred", "y_truth", "sliding_weights"],
+                line_style_list=["solid", "dashed", "dashed"],
+                fig_title=name,
+            )
+        m.draw()
 
     # for i in range(len(labels)):
     #     co = ['black', color_list[i]]
@@ -838,6 +892,16 @@ def test_BYCC(model, args, config, now_string, show_flag=True):
 #     lr = 0.01
 #     main_path = "."
 #     save_step = 20000  # 4000 #500
+
+
+def generate_normal_distribution_weight(length, width, mu_location):
+    mu = mu_location * length
+    sigma = length // 10
+    x = np.linspace(0, length, length)
+    y = 1e2 * length * stats.norm.pdf(x, mu, sigma)
+    y = y / y.sum() * length
+    res = np.column_stack([y for i in range(width)])
+    return res
 
 
 def draw_loss(loss_list, last_rate=1.0):
@@ -948,6 +1012,8 @@ if __name__ == "__main__":
     parser.add_argument("--main_path", default=".", help="main_path")
     parser.add_argument("--save_step", type=int, default=100, help="save_step")
     parser.add_argument("--seed", type=int, default=100, help="seed")
+    parser.add_argument("--sw", type=int, default=0, help="sliding window flag")
+    parser.add_argument("--sw_step", type=int, default=50000, help="sliding window step")
     opt = parser.parse_args()
     opt.overall_start = get_now_string()
 
