@@ -16,7 +16,7 @@ draft = """#!/bin/bash -l
 
 echo $(pwd) > "jobs/pwd.txt"
 source /deac/csc/chenGrp/software/tensorflow/bin/activate
-python {1} --log_path {2} --mode {3} --lr {4} --epoch {5} --epoch_step {6} --save_step {7} --main_path {8} --seed {9}
+python {1} --log_path {2} --mode {3} --lr {4} --epoch {5} --epoch_step {6} --save_step {7} --main_path {8} --seed {9} --sw {10} --sw_step {11}
 """
 
 
@@ -40,7 +40,9 @@ def build_slurm(args):
                 args.epoch_step,
                 args.save_step,
                 args.main_path,
-                one_id
+                one_id,
+                args.sw,
+                args.sw_step
             ))
     print("build slurm file(s) \"{}\" successfully!".format(files_string))
 
@@ -58,6 +60,8 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.001')
     parser.add_argument("--main_path", default=".", help="main_path")
     parser.add_argument("--save_step", type=int, default=100, help="save_step")
+    parser.add_argument("--sw", type=int, default=0, help="sliding window flag")
+    parser.add_argument("--sw_step", type=int, default=50000, help="sliding window step")
     # parser.add_argument("--seed", type=int, default=0, help="seed")
     opt = parser.parse_args()
     build_slurm(opt)
