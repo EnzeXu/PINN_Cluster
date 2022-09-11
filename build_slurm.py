@@ -5,9 +5,9 @@ draft = """#!/bin/bash -l
 
 #SBATCH --job-name="{0}_{9}"
 #SBATCH --partition=gpu
-#SBATCH --nodes=2
+#SBATCH --nodes=4
 #SBATCH --time=2-00:00:00
-#SBATCH --mem=5GB
+#SBATCH --mem=3GB
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 
